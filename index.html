@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labour Connect - Shafiq Ahmad</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <style>
+        .side-profile-img { width: 75px; height: 75px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; margin-bottom: 10px; background: #eee; }
+        .hidden { display: none; }
+        .legal-content p { margin-bottom: 10px; line-height: 1.5; }
+        /* Admin-only style */
+        #admin-only-tools { display: none; padding: 10px; background: #222; margin: 10px; border-radius: 8px; border: 1px dashed #ffeb3b; }
+    </style>
+</head>
+<body>
+    <div id="notif-overlay" onclick="toggleNotif()"></div>
+    <div id="menu-overlay" onclick="closeNav()"></div>
+    <div id="notif-box">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+            <h6 class="m-0 fw-bold" style="color: var(--primary-teal);">Notifications</h6>
+            <i class="fas fa-times text-muted" onclick="toggleNotif()" style="cursor:pointer"></i>
+        </div>
+        <div id="notif-list" class="small py-2 text-center text-muted">No new job alerts.</div>
+    </div>
+    <div id="mySidebar" class="sidebar">
+        <span class="closebtn" onclick="closeNav()">&times;</span>
+        <div class="text-center text-white p-3">
+            <img src="https://via.placeholder.com/75" id="side-user-img" class="side-profile-img">
+            <br>
+            <span id="side-name" style="font-weight: bold; font-size: 18px;">Loading...</span>
+        </div>
+        <a onclick="openPage('profile')"><i class="fas fa-user-circle"></i> My Profile</a>
+        <a onclick="showHome()"><i class="fas fa-home"></i> Dashboard</a>
+        <a onclick="openPage('payment-ledger')"><i class="fas fa-wallet"></i> Payment History</a>
+        <a onclick="openPage('history')"><i class="fas fa-history"></i> Activity History</a>
+        <a onclick="openPage('privacy')"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
+        <a onclick="openPage('contact')"><i class="fas fa-headset"></i> Developer Support</a>
+
+        <div id="admin-only-tools">
+            <p style="color:#ffeb3b; font-size:11px; margin-bottom:5px; font-weight:bold;">ADMIN PANEL</p>
+            <textarea id="admin-manual-msg" placeholder="Write morning alert..." style="width:100%; font-size:12px; border-radius:4px; padding:5px; color:#000;"></textarea>
+            <button onclick="sendAdminAlert()" style="width:100%; background:#ffeb3b; border:none; margin-top:5px; font-weight:bold; font-size:11px; border-radius:4px; padding:5px;">SEND TO ALL</button>
+        </div>
+
+        <hr style="border-color: rgba(255,255,255,0.1);">
+        <a onclick="logout()" style="color: #ff5252 !important;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+    <div id="wrapper">
+        <div class="header" id="main-header">
+            <i class="fas fa-bars fa-lg" onclick="openNav()" style="cursor:pointer"></i>
+            <h2 style="font-size: 17px; margin:0; font-weight: bold;">LABOUR CONNECT</h2>
+            <i class="fas fa-bell fa-lg" id="bell-icon" onclick="toggleNotif(event)" style="cursor:pointer"></i>
+        </div>
+        <div id="home-view">
+            <div class="news-ticker">
+                <div class="ticker-text" id="running-msg">Welcome to Labour Connect! Post your work requirements here.</div>
+            </div>
+            <div class="card-box mt-3">
+                <h6 class="fw-bold mb-3 text-start" style="color: var(--primary-teal);"><i class="fas fa-edit me-2"></i>Post Work Details</h6>
+                <input type="text" id="in-name" class="form-control mb-2" placeholder="Enter Your Name">
+                <select id="in-skill" class="form-select mb-2">
+                    <option value="General Labour">General Labour (Majdoor)</option>
+                    <option value="Carpenter">Carpenter</option>
+                    <option value="Mason">Mason/Mistri</option>
+                    <option value="Electrician">Electrician</option>
+                    <option value="Painter">Painter</option>
+                </select>
+                <textarea id="in-msg" class="form-control mb-3" rows="3" placeholder="Describe the work..."></textarea>
+                <div class="d-flex gap-2">
+                    <button onclick="postJob('job')" class="btn-post shadow-sm w-100">SEND NOTIFICATION</button>
+                    <button onclick="postJob('free')" class="btn shadow-sm w-100" style="background: #ffeb3b; color: #000; font-weight: bold; border-radius: 20px; border: none; font-size: 11px;">I AM AVAILABLE</button>
+                </div>
+            </div>
+            <div class="card-box mt-3" style="border-top: 4px solid #2e7d32; background: #f9f9f9;">
+                <h6 class="fw-bold mb-3 text-start text-success" style="font-size: 15px;"><i class="fas fa-plus-circle me-2"></i>Add Payment Record</h6>
+                <input type="text" id="pay-name" class="form-control mb-2" placeholder="Worker Name">
+                <div class="row g-2 mb-2">
+                    <div class="col"><input type="number" id="pay-total" class="form-control" placeholder="Total ₹"></div>
+                    <div class="col"><input type="number" id="pay-pending" class="form-control" placeholder="Pending ₹"></div>
+                </div>
+                <button onclick="savePayment()" class="btn btn-success w-100 shadow-sm" style="border-radius: 20px; font-weight: bold;">SAVE RECORD</button>
+                <div class="mt-3 p-2 rounded small" style="background: #e8f5e9; border: 1px dashed #2e7d32;">
+                    <div class="d-flex justify-content-between"><span>Total Wages:</span> <b id="dash-total">₹0</b></div>
+                    <div class="d-flex justify-content-between text-danger"><span>Total Pending:</span> <b id="dash-pending">₹0</b></div>
+                </div>
+            </div>
+            <div id="feed-container"></div>
+        </div>
+    </div>
+    <div id="privacy-view" class="page-view text-start">
+        <div class="page-header"><i class="fas fa-arrow-left me-3 pointer" onclick="showHome()"></i> <h5>Privacy Policy</h5></div>
+        <div class="legal-content p-3" style="font-size: 13px; background: #fff; border-radius: 12px; margin: 10px;">
+            <p class="text-muted small"><b>Version 1.0.3 | Last Updated: March 2026</b></p>
+            <h6 class="fw-bold text-success">1. Data Collection</h6>
+            <p>Labour Connect collects your name, professional skill category, and location (District/Ward) to help connect you with potential work opportunities. We use Firebase for secure authentication and data storage.</p>
+            <h6 class="fw-bold text-success">2. How We Use Your Data</h6>
+            <p>Your profile information is shared within the app to facilitate job connections. We do not sell or share your personal data with third-party advertisers or external organizations.</p>
+            <h6 class="fw-bold text-success">3. Data Security</h6>
+            <p>We take industry-standard measures to protect your information, especially your payment history and profile records stored via Google Firebase.</p>
+            <h6 class="fw-bold text-success">4. Account Deletion</h6>
+            <p>Users have full control over their data. You can request permanent account and data deletion by clicking the button below.</p>
+            <a href="mailto:support@laborconnect.in?subject=Account Deletion Request" class="btn btn-sm btn-outline-danger w-100 mb-3">Request Account Deletion</a>
+            <h6 class="fw-bold text-success">5. Policy Updates</h6>
+            <p>We may update this policy from time to time. Continued use of the app implies consent to the latest terms.</p>
+        </div>
+    </div>
+    <div id="contact-view" class="page-view">
+        <div class="page-header"><i class="fas fa-arrow-left me-3 pointer" onclick="showHome()"></i> <h5>Developer Support</h5></div>
+        <div class="container mt-4">
+            <div class="card-box py-4 shadow-sm text-center" style="border-top: 5px solid var(--primary-teal);">
+                <i class="fas fa-user-check fa-3x mb-3" style="color: var(--primary-teal);"></i>
+                <h4 class="fw-bold">Shafiq Ahmad</h4>
+                <p class="text-muted small">Lead Developer & App Founder</p>
+                <hr class="mx-4">
+                <div class="text-start px-3" style="font-size: 13px; line-height: 1.6;">
+                    <p><strong>English:</strong><br>
+                    Labour Connect is built to empower local workers of J&K. For any technical support or app issues, please reach out to us.</p>
+                    <p><strong>Roman Urdu:</strong><br>
+                    Labour Connect ko J&K ke mazdoor bhaiyon ki madad ke liye banaya gaya hai. Agar aapko app mein koi technical masla pesh aaye, toh humse raabta karein.</p>
+                    
+                    <div class="p-3 rounded mt-3" style="background: #f8f9fa; border: 1px solid #ddd;">
+                        <p class="mb-2"><strong><i class="fas fa-envelope text-success me-2"></i> Email:</strong><br>shafiqnr1981@gmail.com</p>
+                        <p class="mb-0"><strong><i class="fas fa-map-marker-alt text-danger me-2"></i> Location:</strong><br>Bothu Bandipora, J&K - 193502</p>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center mt-3 text-muted" style="font-size: 10px;">MADE IN BANDIPORA | DEVELOPED BY SHAFIQ AHMAD</p>
+        </div>
+    </div>
+    <div id="profile-view" class="page-view">
+        <div class="page-header"><i class="fas fa-arrow-left me-3 pointer" onclick="showHome()"></i> <h5>My Profile</h5></div>
+        <div class="container mt-3">
+            <div class="card-box text-center">
+                <div class="position-relative d-inline-block">
+                    <img src="https://via.placeholder.com/100" id="prof-img-preview" class="side-profile-img" style="width:110px; height:110px;">
+                    <label for="change-photo" class="position-absolute bottom-0 end-0 bg-success text-white rounded-circle p-2" style="cursor:pointer; width:35px; height:35px; display:flex; align-items:center; justify-content:center;">
+                        <i class="fas fa-camera fa-xs"></i>
+                    </label>
+                    <input type="file" id="change-photo" class="hidden" accept="image/*" onchange="previewAndConvert(this)">
+                </div>
+                <h5 id="prof-display-name" class="fw-bold mt-2 mb-0">---</h5>
+                <p class="text-muted small" id="prof-display-email">---</p>
+            </div>
+            <div class="card-box">
+                <label class="small fw-bold text-muted">Update Name</label>
+                <input type="text" id="edit-name" class="form-control mb-2">
+                <label class="small fw-bold text-muted">District</label>
+                <select id="edit-city" class="form-select mb-2">
+                    <option value="Anantnag">Anantnag</option>
+                    <option value="Bandipora" selected>Bandipora</option>
+                    <option value="Baramulla">Baramulla</option>
+                    <option value="Srinagar">Srinagar</option>
+                </select>
+                <label class="small fw-bold text-muted">Work Category</label>
+                <select id="edit-category" class="form-select mb-2">
+                    <option value="General Labour">General Labourer</option>
+                    <option value="Carpenter">Carpenter</option>
+                    <option value="Mason">Mason/Mistri</option>
+                </select>
+                <label class="small fw-bold text-muted">Ward Number</label>
+                <input type="number" id="edit-ward" class="form-control mb-3">
+                <button onclick="updateProfile()" id="update-btn" class="btn btn-success w-100 rounded-pill fw-bold">UPDATE PROFILE</button>
+            </div>
+        </div>
+    </div>
+    <div id="payment-ledger-view" class="page-view">
+        <div class="page-header"><i class="fas fa-arrow-left me-3 pointer" onclick="showHome()"></i> <h5>Payment Ledger</h5></div>
+        <div id="ledger-content" class="p-2"></div>
+    </div>
+    <div id="history-view" class="page-view">
+        <div class="page-header"><i class="fas fa-arrow-left me-3 pointer" onclick="showHome()"></i> <h5>Activity History</h5></div>
+        <div id="history-content" class="p-2"></div>
+    </div>
+    <div class="footer-bar">
+        <p>© 2026 Labour Connect | All Rights Reserved</p>
+        <p>Developed by Shafiq Ahmad</p>
+        <div class="footer-links">
+            <span onclick="openPage('privacy')">Privacy Policy</span> | <span onclick="openPage('contact')">Support</span>
+        </div>
+    </div>
+    <script>
+        const MY_UID ="Fut2luiSM4NVpPOaZLIt11MAU6A3";
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                if(user.uid === MY_UID) {
+                    document.getElementById('admin-only-tools').style.display = 'block';
+                }
+                firebase.database().ref('users/' + user.uid).on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if(data) {
+                        document.getElementById('side-name').innerText = data.name;
+                        if(data.profilePhoto) document.getElementById('side-user-img').src = data.profilePhoto;
+                    }
+                });
+            } else {
+                if(!window.location.href.includes("login.html") && !window.location.href.includes("register.html")) {
+                    window.location.href = "login.html";
+                }
+            }
+        });
+        function sendAdminAlert() {
+            const val = document.getElementById('admin-manual-msg').value.trim();
+            if(!val) return alert("Kuch likhein!");
+            firebase.database().ref('alerts').push({
+                name: "ADMIN UPDATE 📢",
+                skill: "Official",
+                msg: val,
+                time: new Date().toLocaleString(),
+                type: 'admin'
+            }).then(() => {
+                document.getElementById('admin-manual-msg').value = "";
+                alert("Paigham bhej diya gaya!");
+                closeNav();
+            });
+        }
+        function showHome() {
+            document.querySelectorAll('.page-view').forEach(p => p.style.display = 'none');
+            document.getElementById('home-view').style.display = 'block';
+            document.getElementById('wrapper').style.display = 'block';
+        }
+        function openPage(pageId) {
+            document.querySelectorAll('.page-view').forEach(p => p.style.display = 'none');
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('wrapper').style.display = 'none';
+            document.getElementById(pageId + '-view').style.display = 'block';
+            if(pageId === 'profile' && typeof loadProfileData === 'function') loadProfileData();
+            closeNav();
+        }
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

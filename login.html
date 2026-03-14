@@ -1,0 +1,172 @@
+5<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labour Connect Pro - Login & Register</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        body { background: linear-gradient(135deg, #075e54 0%, #128c7e 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
+        .auth-card { background: #ffffff; padding: 35px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); max-width: 450px; width: 100%; border: 1px solid rgba(255,255,255,0.1); }
+        .header-title { color: #075e54; font-weight: 800; text-align: center; margin-bottom: 10px; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+        .sub-header { text-align: center; color: #666; font-size: 14px; margin-bottom: 30px; }
+        .hidden { display: none; }
+        .btn-primary-theme { background: #075e54; color: white; width: 100%; margin-top: 15px; border: none; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 16px; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(7, 94, 84, 0.3); }
+        .btn-primary-theme:hover { background: #054a42; transform: translateY(-2px); }
+        .form-control, .form-select { margin-bottom: 15px; border-radius: 12px; border: 1.5px solid #eee; padding: 12px; font-weight: 500; font-size: 15px; }
+        .link-text { color: #075e54; font-weight: 700; text-decoration: none; cursor: pointer; font-size: 0.95rem; }
+        .pass-wrapper { position: relative; }
+        .toggle-icon { position: absolute; right: 15px; top: 18px; cursor: pointer; color: #075e54; z-index: 10; font-size: 18px; }
+        .brand-icon { text-align: center; color: #075e54; font-size: 40px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+<div class="auth-card">
+    <div class="brand-icon"><i class="fas fa-tools"></i></div>
+    <h3 class="header-title" id="auth-title">USER LOGIN</h3>
+    <p class="sub-header" id="auth-sub-title">Connect with labourers in J&K</p>
+    <div id="login-box">
+        <input type="email" id="login-email" class="form-control" placeholder="Email Address">
+        <div class="pass-wrapper">
+            <input type="password" id="login-pass" class="form-control" placeholder="Password">
+            <i class="fa-solid fa-eye toggle-icon" onclick="togglePass('login-pass', this)"></i>
+        </div>
+        <button class="btn btn-primary-theme" onclick="loginUser()">SIGN IN</button>
+        <div class="text-center mt-3 d-flex justify-content-between">
+            <a onclick="forgotPassword()" class="link-text">Forgot Password?</a>
+            <a onclick="resendVerification()" class="link-text" style="font-size: 11px; color: #666;">Resend Link?</a>
+        </div>
+        <p class="text-center mt-4 small text-muted">New User? <a onclick="showRegister()" class="link-text">Register Here</a></p>
+    </div>
+    <div id="register-box" class="hidden">
+        <input type="text" id="reg-name" class="form-control" placeholder="Full Name">
+        <select id="reg-city" class="form-select">
+            <option value="">Select District</option>
+            <option value="Anantnag">Anantnag</option>
+            <option value="Bandipora">Bandipora</option>
+            <option value="Baramulla">Baramulla</option>
+            <option value="Budgam">Budgam</option>
+            <option value="Doda">Doda</option>
+            <option value="Ganderbal">Ganderbal</option>
+            <option value="Jammu">Jammu</option>
+            <option value="Kathua">Kathua</option>
+            <option value="Kishtwar">Kishtwar</option>
+            <option value="Kulgam">Kulgam</option>
+            <option value="Kupwara">Kupwara</option>
+            <option value="Poonch">Poonch</option>
+            <option value="Pulwama">Pulwama</option>
+            <option value="Rajouri">Rajouri</option>
+            <option value="Ramban">Ramban</option>
+            <option value="Reasi">Reasi</option>
+            <option value="Samba">Samba</option>
+            <option value="Shopian">Shopian</option>
+            <option value="Srinagar">Srinagar</option>
+            <option value="Udhampur">Udhampur</option>
+        </select>
+        <input type="text" id="reg-panchayat" class="form-control" placeholder="Panchayat / Village Name">
+        <input type="number" id="reg-ward" class="form-control" placeholder="Ward Number">
+        <select id="reg-category" class="form-select">
+            <option value="">Work Category</option>
+            <option value="Mason">Mason (Mistri)</option>
+            <option value="Carpenter">Carpenter</option>
+            <option value="Electrician">Electrician</option>
+            <option value="Painter">Painter</option>
+            <option value="General Labourer">General Labourer</option>
+        </select>
+        <label class="form-label small text-muted px-1" style="font-weight: 600;">Profile Photo Upload Karein</label>
+        <input type="file" id="reg-photo" class="form-control" accept="image/*">
+        <input type="email" id="reg-email" class="form-control" placeholder="Email ID">
+        <div class="pass-wrapper">
+            <input type="password" id="reg-pass" class="form-control" placeholder="Create Password (Min 6 chars)">
+            <i class="fa-solid fa-eye toggle-icon" onclick="togglePass('reg-pass', this)"></i>
+        </div>
+        <button class="btn btn-primary-theme" id="reg-btn" onclick="registerUser()">REGISTER ACCOUNT</button>
+        <p class="text-center mt-3 small text-muted">Have an account? <a onclick="showLogin()" class="link-text">Login</a></p>
+    </div>
+</div>
+<script>
+// Firebase Config
+const firebaseConfig = {
+    apiKey: "AIzaSyAywaLwLtQlZB3nqrL3tSudjLd5XDVxSmw",
+    authDomain: "labour-connect-pro.firebaseapp.com",
+    databaseURL: "https://Labour-connect-pro-default-rtdb.firebaseio.com", 
+    projectId: "labour-connect-pro",
+    storageBucket: "labour-connect-pro.firebasestorage.app",
+    messagingSenderId: "274517220693",
+    appId: "1:274517220693:web:af52f211ca4486251ba3dc"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+function convertImageToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = e => reject(e);
+    });
+}
+function loginUser() {
+    const email = document.getElementById('login-email').value;
+    const pass = document.getElementById('login-pass').value;
+    if(!email || !pass) return alert("Please enter login details!");
+    auth.signInWithEmailAndPassword(email, pass).then((res) => {
+        if(res.user.emailVerified) { window.location.href = "index.html"; } 
+        else { alert("Pehle email verify karein! Check Inbox/Spam."); auth.signOut(); }
+    }).catch((e) => alert(e.message));
+}
+async function registerUser() {
+    const email = document.getElementById('reg-email').value;
+    const pass = document.getElementById('reg-pass').value;
+    const name = document.getElementById('reg-name').value;
+    const city = document.getElementById('reg-city').value;
+    const panchayat = document.getElementById('reg-panchayat').value;
+    const ward = document.getElementById('reg-ward').value;
+    const cat = document.getElementById('reg-category').value;
+    const photoFile = document.getElementById('reg-photo').files[0];
+
+    if(!email || !pass || !name || !city || !photoFile) return alert("Fill all details!");
+    document.getElementById('reg-btn').innerText = "Processing...";
+    document.getElementById('reg-btn').disabled = true;
+    try {
+        const photo64 = await convertImageToBase64(photoFile);
+        const res = await auth.createUserWithEmailAndPassword(email, pass);
+        await db.ref('users/' + res.user.uid).set({
+            name, city, panchayat, ward, category: cat, email, profilePhoto: photo64
+        });
+        await res.user.sendEmailVerification();
+        alert("Verification link sent! Check your email.");
+        showLogin();
+    } catch (e) { alert(e.message); }
+    finally { document.getElementById('reg-btn').innerText = "REGISTER ACCOUNT"; document.getElementById('reg-btn').disabled = false; }
+}
+function resendVerification() {
+    const email = document.getElementById('login-email').value;
+    const pass = document.getElementById('login-pass').value;
+    if(!email || !pass) return alert("Enter email and password first!");
+    auth.signInWithEmailAndPassword(email, pass).then((res) => {
+        res.user.sendEmailVerification().then(() => alert("Verification link resent!"));
+        auth.signOut();
+    }).catch(e => alert(e.message));
+}
+function togglePass(id, icon) {
+    const el = document.getElementById(id);
+    el.type = el.type === "password" ? "text" : "password";
+    icon.classList.toggle("fa-eye-slash");
+}
+function forgotPassword() {
+    const email = document.getElementById('login-email').value;
+    if(!email) return alert("Enter email!");
+    auth.sendPasswordResetEmail(email).then(() => alert("Reset link sent!")).catch(e => alert(e.message));
+}
+function showRegister() { document.getElementById('login-box').classList.add('hidden'); document.getElementById('register-box').classList.remove('hidden'); document.getElementById('auth-title').innerText = "REGISTER"; }
+function showLogin() { document.getElementById('register-box').classList.add('hidden'); document.getElementById('login-box').classList.remove('hidden'); document.getElementById('auth-title').innerText = "USER LOGIN"; }
+</script>
+</body>
+</html>
+

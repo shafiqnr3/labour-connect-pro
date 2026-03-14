@@ -1,0 +1,102 @@
+/* --- Final Optimized Style.css (Labour Connect Pro) --- */
+:root { 
+    --primary-teal: #075e54; --dark-teal: #054d44; 
+    --accent-green: #25d366; --footer-bg: #0b413a; 
+    --pending-red: #d32f2f; --success-green: #2e7d32;
+}
+body { 
+    background: #f0f2f5; font-family: 'Segoe UI', sans-serif; 
+    margin: 0; overflow-x: hidden; padding-bottom: 75px; 
+}
+/* Common Overlays */
+#menu-overlay, #notif-overlay { 
+    display: none; position: fixed; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.1); z-index: 2000; 
+}
+#notif-overlay { top: 55px; z-index: 4500; }
+.blur-bg { filter: blur(5px); transition: 0.3s; pointer-events: none; }
+/* News Ticker - FIXED WITHOUT GAP */
+.news-ticker { 
+    background: #dcf8c6; 
+    color: var(--primary-teal); 
+    padding: 5px 0; 
+    font-size: 13px; 
+    font-weight: bold; 
+    border-bottom: 1px solid #c5e1a5; 
+    overflow: hidden; 
+    white-space: nowrap; 
+    display: flex; 
+    align-items: center; 
+    position: sticky; 
+    top: 44px; /* Isse header ke sath chipak jayega */
+    z-index: 999;
+    margin-top: 0; 
+}
+.ticker-text { display: inline-block; padding-left: 100%; animation: marquee 18s linear infinite; }
+@keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+/* Header & Sidebar */
+.header, .page-header { background: var(--primary-teal); color: white; padding: 10px 15px; position: sticky; top: 0; z-index: 1000; height: 44px; box-sizing: border-box; }
+.header { display: flex; justify-content: space-between; align-items: center; }
+.sidebar { 
+    height: 100%; width: 0; position: fixed; z-index: 3000; top: 0; left: 0; 
+    background-color: var(--dark-teal); overflow-x: hidden; transition: 0.4s; padding-top: 60px; 
+}
+.sidebar a { 
+    padding: 15px 25px; text-decoration: none; font-size: 16px; color: #fff !important; 
+    display: block; border-bottom: 1px solid #066358; cursor: pointer; 
+}
+.sidebar a i { color: var(--accent-green); margin-right: 12px; }
+.sidebar .closebtn { position: absolute; top: 10px; right: 20px; font-size: 30px; color: white; cursor: pointer; }
+/* Notification Drop-down */
+#notif-box { 
+    display: none; position: fixed; top: 55px; right: 10px; width: 280px; 
+    background: white; border-radius: 0 0 12px 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+    z-index: 5000; padding: 15px; animation: slideDown 0.3s ease-out;
+}
+@keyframes slideDown { 0% { transform: translateY(-20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+/* Cards & Buttons */
+.card-box, .history-card { background: white; padding: 18px; margin: 12px 10px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; }
+.available-card { background: #fffde7 !important; border-left: 6px solid #fbc02d !important; }
+.btn-post { background: #00796b; color: white; font-weight: bold; border-radius: 20px; padding: 8px 20px; border: none; font-size: 13px; cursor: pointer; }
+.btn-ind-del { position: absolute; right: 10px; top: 10px; background: #ffebee; color: var(--pending-red); border: none; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer; }
+/* --- Helper Classes --- */
+.teal-text { color: var(--primary-teal) !important; }
+.fs-15 { font-size: 15px !important; }
+.pointer { cursor: pointer; }
+.rounded-12 { border-radius: 12px; }
+.rounded-15 { border-radius: 15px; }
+
+/* Job Available Button Special Style */
+.btn-avail { 
+    background: #ffeb3b; color: #000; font-weight: bold; 
+    border-radius: 20px; border: none; font-size: 11px; 
+    padding: 8px 20px; cursor: pointer; transition: 0.3s;
+}
+.btn-avail:hover { background: #fdd835; }
+/* Payment Dashboard Summary Box */
+.dash-stats { background: #e8f5e9; border: 1px dashed #2e7d32; }
+/* Page Views */
+.page-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 2500; overflow-y: auto; }
+.page-header { padding: 15px; display: flex; align-items: center; z-index: 2600; }
+/* Footer - Balanced Colors Added Here */
+.footer-bar { 
+    position: fixed; bottom: 0; left: 0; width: 100%; background: var(--footer-bg); 
+    color: white; padding: 10px 0; font-size: 11px; z-index: 1000; text-align: center; 
+    border-top: 1px solid rgba(255,255,255,0.1); line-height: 1.4; 
+}
+.footer-bar p { margin: 0; opacity: 0.8; }
+.footer-links { margin-top: 4px; }
+
+/* Rang ko Balanced kar diya gaya hai */
+.footer-links span { 
+    color: #fdd835 !important; /* Soft Yellow - Jo saaf dikhega magar "Tez" nahi lagega */
+    font-weight: 600; 
+    margin: 0 8px; 
+    cursor: pointer; 
+    text-decoration: none; 
+    border-bottom: 1px solid rgba(253, 216, 53, 0.4); 
+}
+.footer-links span:hover { 
+    color: #ffffff !important; 
+    border-bottom: 1px solid #ffffff; 
+}
