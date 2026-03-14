@@ -298,4 +298,4 @@ setInterval(function() {
         ticker.innerHTML = "📅 " + d.toLocaleDateString() + " | 🕒 " + d.toLocaleTimeString() + " | " + welcomeText;
     }
 }, 1000);
-        
+            
