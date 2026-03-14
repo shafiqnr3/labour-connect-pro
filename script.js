@@ -9,17 +9,23 @@ const firebaseConfig = {
     appId: "1:274517220693:web:af52f211ca4486251ba3dc",
     measurementId: "G-V9TJMW69TH"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database(), auth = firebase.auth();
+
+// --- APP ID ADDED ---
+const APP_ID = "3956730"; 
+
 const welcomeText = "Welcome to Labor Connect! Post your work requirements here.";
 const notifSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 const getEl = id => document.getElementById(id);
 const toggleDisplay = (id, show) => getEl(id).style.display = show ? 'block' : 'none';
+
 // Secure Admin ID
 const MY_ADMIN_ID = "Fut2luiSM4NVpPOaZLIt11MAU6A3";
+
 // --- PROFILE & FAST IMAGE COMPRESSION LOGIC ---
 let tempPhoto64 = "";
-// Yeh function photo ko chota karega taake loading fast ho
 function compressAndConvert(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -29,13 +35,12 @@ function compressAndConvert(file) {
             img.src = event.target.result;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 300; // Speed ke liye size chota rakha hai
+                const MAX_WIDTH = 300; 
                 const scaleSize = MAX_WIDTH / img.width;
                 canvas.width = MAX_WIDTH;
                 canvas.height = img.height * scaleSize;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                // 0.6 quality se size bohot kam ho jata hai aur speed badhti hai
                 const base64 = canvas.toDataURL('image/jpeg', 0.6); 
                 resolve(base64);
             };
@@ -43,12 +48,14 @@ function compressAndConvert(file) {
         reader.onerror = error => reject(error);
     });
 }
+
 async function previewAndConvert(input) {
     if (input.files && input.files[0]) {
         tempPhoto64 = await compressAndConvert(input.files[0]);
         if(getEl('prof-img-preview')) getEl('prof-img-preview').src = tempPhoto64;
     }
 }
+
 function loadProfileData() {
     const user = auth.currentUser;
     if (!user) return;
@@ -65,6 +72,7 @@ function loadProfileData() {
         }
     });
 }
+
 async function updateProfile() {
     const user = auth.currentUser;
     if (!user) return alert("Please login first!");
@@ -83,10 +91,11 @@ async function updateProfile() {
         await db.ref('users/' + user.uid).update(updatedData);
         alert("Profile Updated Successfully!");
         openPage('home');
-        location.reload(); // Turant dashboard update karne ke liye
+        location.reload(); 
     } catch (e) { alert("Error: " + e.message); }
     finally { btn.innerText = "UPDATE PROFILE"; btn.disabled = false; }
 }
+
 // --- Auth Check & Data Loading ---
 auth.onAuthStateChanged(user => {
     if (user) {
@@ -128,7 +137,9 @@ auth.onAuthStateChanged(user => {
         window.location.href = "login.html";
     }
 });
+
 function logout() { if(confirm("Are you sure you want to logout?")) auth.signOut().then(() => window.location.href = "login.html"); }
+
 function sendAdminAlert() {
     const val = getEl('admin-manual-msg').value.trim();
     if(!val) return alert("Please enter a message!");
@@ -146,8 +157,10 @@ function sendAdminAlert() {
         closeNav();
     }).catch(e => alert(e.message));
 }
+
 function openNav() { getEl("mySidebar").style.width = "270px"; getEl("wrapper").classList.add("blur-bg"); toggleDisplay("menu-overlay", true); }
 function closeNav() { getEl("mySidebar").style.width = "0"; getEl("wrapper").classList.remove("blur-bg"); toggleDisplay("menu-overlay", false); }
+
 function openPage(id) {
     closeNav();
     if (!window.history.state || window.history.state.page !== id) window.history.pushState({page: id}, id, "");
@@ -162,19 +175,23 @@ function openPage(id) {
         if(id === 'profile') loadProfileData();
     }
 }
+
 window.onpopstate = e => {
     const p = (e.state && e.state.page) ? e.state.page : 'home';
     openPage(p);
 };
+
 window.onload = () => {
     window.history.replaceState({page: 'home'}, "home", "");
     if ("Notification" in window && Notification.permission !== "granted") Notification.requestPermission();
 };
+
 function toggleNotif(e) {
     if(e) e.stopPropagation();
     const show = getEl('notif-box').style.display !== 'block';
     ['notif-box', 'notif-overlay'].forEach(id => toggleDisplay(id, show));
 }
+
 function postJob(type) {
     const user = auth.currentUser;
     if (!user) {
@@ -203,6 +220,7 @@ function postJob(type) {
         });
     });
 }
+
 db.ref('alerts').on('value', snap => {
     let feed = "", notif = "";
     const tickerContainer = getEl('running-msg').parentElement;
@@ -227,6 +245,7 @@ db.ref('alerts').on('value', snap => {
     });
     getEl('feed-container').innerHTML = feed; getEl('notif-list').innerHTML = notif || "No new alerts.";
 });
+
 function archiveAlert(id, status) {
     const user = auth.currentUser;
     if(!user) return;
@@ -239,6 +258,7 @@ function archiveAlert(id, status) {
         });
     }
 }
+
 function savePayment() {
     const user = auth.currentUser;
     if(!user) return alert("Please login first!");
@@ -254,6 +274,7 @@ function savePayment() {
         alert("Record saved successfully!");
     }).catch(e => alert("Error: " + e.message));
 }
+
 db.ref('alerts').limitToLast(1).on('child_added', snap => {
     const d = snap.val();
     const ticker = getEl('running-msg');
@@ -269,6 +290,7 @@ db.ref('alerts').limitToLast(1).on('child_added', snap => {
     notifSound.play().catch(e => {});
     if (Notification.permission === "granted") new Notification("Labor Connect", { body: `${d.name}: ${d.msg}` });
 });
+
 setInterval(function() {
     var ticker = document.getElementById('running-msg');
     if (ticker && !ticker.innerHTML.includes("ALERT") && !ticker.innerHTML.includes("ADMIN")) {
@@ -276,3 +298,4 @@ setInterval(function() {
         ticker.innerHTML = "📅 " + d.toLocaleDateString() + " | 🕒 " + d.toLocaleTimeString() + " | " + welcomeText;
     }
 }, 1000);
+        
