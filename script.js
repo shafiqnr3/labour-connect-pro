@@ -17,7 +17,8 @@ const db = firebase.database(), auth = firebase.auth();
 const APP_ID = "3956730"; 
 
 const welcomeText = "Welcome to Labor Connect! Post your work requirements here.";
-const notifSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+// SOUND FIX: Naya tez sound link
+const notifSound = new Audio('https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3');
 const getEl = id => document.getElementById(id);
 const toggleDisplay = (id, show) => getEl(id).style.display = show ? 'block' : 'none';
 
@@ -75,11 +76,14 @@ function loadProfileData() {
 
 async function updateProfile() {
     const user = auth.currentUser;
-    if (!user) return alert("Please login first!");
+    if (!user) return Swal.fire('Error', 'Please login first!', 'error');
     const btn = getEl('update-btn');
     const newName = getEl('edit-name').value.trim();
-    if(!newName) return alert("Name is required!");
-    btn.innerText = "Updating..."; btn.disabled = true;
+    if(!newName) return Swal.fire('Wait!', 'Name is required!', 'warning');
+    
+    // --- LOADING SPINNER ---
+    Swal.fire({ title: 'Updating...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    
     const updatedData = {
         name: newName,
         city: getEl('edit-city').value,
@@ -89,11 +93,11 @@ async function updateProfile() {
     if (tempPhoto64) updatedData.profilePhoto = tempPhoto64;
     try {
         await db.ref('users/' + user.uid).update(updatedData);
-        alert("Profile Updated Successfully!");
+        // AUTO CLOSE SUCCESS
+        Swal.fire({ title: 'Success', text: 'Profile Updated!', icon: 'success', timer: 1500, showConfirmButton: false });
         openPage('home');
-        location.reload(); 
-    } catch (e) { alert("Error: " + e.message); }
-    finally { btn.innerText = "UPDATE PROFILE"; btn.disabled = false; }
+        setTimeout(() => { location.reload(); }, 1600); 
+    } catch (e) { Swal.fire('Error', e.message, 'error'); }
 }
 
 // --- Auth Check & Data Loading ---
@@ -116,8 +120,8 @@ auth.onAuthStateChanged(user => {
             let html = "";
             snap.forEach(c => {
                 const d = c.val();
-                html = `<div class="history-card" style="border-left: 5px solid #075e54;">
-                    <button class="btn-ind-del" onclick="confirm('Delete Forever?') && db.ref('history/${user.uid}/${c.key}').remove()">Delete</button>
+                html = `<div class="history-card" style="border-left: 5px solid #075e54; position:relative;">
+                    <button class="btn-ind-del" onclick="deleteHistoryItem('${c.key}')">Delete</button>
                     <span class="badge ${d.status === 'Accepted' ? 'bg-success' : 'bg-secondary'}" style="font-size:9px;">${d.status}</span><br>
                     <b>${d.name} (${d.skill})</b><p class="mb-0 small">${d.msg}</p><small class="text-muted">${d.time}</small></div>` + html;
             });
@@ -127,8 +131,8 @@ auth.onAuthStateChanged(user => {
             let tWages = 0, tPending = 0, html = "";
             snap.forEach(c => {
                 const p = c.val(); tWages += p.totalAmount; tPending += p.pendingAmount;
-                html += `<div class="history-card" style="border-left: 5px solid ${p.pendingAmount > 0 ? '#d32f2f' : '#2e7d32'}">
-                    <button class="btn-ind-del" onclick="confirm('Delete record?') && db.ref('payments/${user.uid}/${c.key}').remove()">Del</button>
+                html += `<div class="history-card" style="border-left: 5px solid ${p.pendingAmount > 0 ? '#d32f2f' : '#2e7d32'}; position:relative;">
+                    <button class="btn-ind-del" onclick="deletePaymentItem('${c.key}')">Del</button>
                     <b>${p.workerName}</b><br><small>Total: ₹${p.totalAmount} | Pending: ₹${p.pendingAmount}</small></div>`;
             });
             getEl('ledger-content').innerHTML = html; getEl('dash-total').innerText = "₹" + tWages; getEl('dash-pending').innerText = "₹" + tPending;
@@ -138,24 +142,44 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-function logout() { if(confirm("Are you sure you want to logout?")) auth.signOut().then(() => window.location.href = "login.html"); }
+// Professional Logout with Sidebar Closure
+function logout() {
+    // Menu band karein taake logout box piche na chupe
+    closeNav(); 
+    
+    Swal.fire({
+        title: 'Logout?',
+        text: "Are you sure you want to logout?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#075e54',
+        confirmButtonText: 'Yes, Logout!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            auth.signOut().then(() => { window.location.href = "login.html"; });
+        }
+    });
+}
 
 function sendAdminAlert() {
     const val = getEl('admin-manual-msg').value.trim();
-    if(!val) return alert("Please enter a message!");
-    const user = auth.currentUser;
+    if(!val) return Swal.fire('Info', 'Please enter a message!', 'info');
+    
+    Swal.fire({ title: 'Sending...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    
     db.ref('alerts').push({
         name: "ADMIN UPDATE 📢",
         skill: "Official Notification",
         msg: val,
         time: new Date().toLocaleString(),
         type: 'admin',
-        creatorUid: user.uid
+        creatorUid: auth.currentUser.uid
     }).then(() => {
         getEl('admin-manual-msg').value = "";
-        alert("Message sent successfully!");
+        Swal.fire({ title: 'Sent!', text: 'Broadcast sent!', icon: 'success', timer: 1500, showConfirmButton: false });
         closeNav();
-    }).catch(e => alert(e.message));
+    }).catch(e => Swal.fire('Error', e.message, 'error'));
 }
 
 function openNav() { getEl("mySidebar").style.width = "270px"; getEl("wrapper").classList.add("blur-bg"); toggleDisplay("menu-overlay", true); }
@@ -195,28 +219,27 @@ function toggleNotif(e) {
 function postJob(type) {
     const user = auth.currentUser;
     if (!user) {
-        alert("Please login first!");
+        Swal.fire('Login Required', 'Please login first!', 'warning');
         window.location.href = "login.html";
         return;
     }
     const name = getEl('in-name').value.trim();
     const skill = getEl('in-skill').value;
     const msg = getEl('in-msg').value.trim() || (type === 'free' ? "I am available for work." : "");
-    if(!name || !msg) return alert("Please enter Name and Details!");
+    if(!name || !msg) return Swal.fire('Empty Fields', 'Please enter Name and Details!', 'warning');
+    
+    // SPINNER
+    Swal.fire({ title: 'Posting...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+
     db.ref('users/' + user.uid).once('value', snap => {
         const uData = snap.val();
         const photoUrl = (uData && uData.profilePhoto) ? uData.profilePhoto : "";
         db.ref('alerts').push({ 
-            name, 
-            skill, 
-            msg, 
-            time: new Date().toLocaleString(), 
-            type, 
-            userPhoto: photoUrl, 
-            creatorUid: user.uid 
+            name, skill, msg, time: new Date().toLocaleString(), type, 
+            userPhoto: photoUrl, creatorUid: user.uid 
         }).then(() => {
             getEl('in-msg').value = ""; 
-            alert("Alert Sent Successfully!");
+            Swal.fire({ title: 'Sent!', text: 'Alert Published!', icon: 'success', timer: 1500, showConfirmButton: false });
         });
     });
 }
@@ -247,55 +270,77 @@ db.ref('alerts').on('value', snap => {
 });
 
 function archiveAlert(id, status) {
-    const user = auth.currentUser;
-    if(!user) return;
-    if(confirm("Do you want to save this to history and clear from dashboard?")) {
-        db.ref('alerts/' + id).once('value', snap => {
-            if(snap.val()) {
-                db.ref('history/' + user.uid).push({ ...snap.val(), status, archivedAt: new Date().toLocaleString() });
-                db.ref('alerts/' + id).remove();
-            }
-        });
-    }
+    Swal.fire({
+        title: 'Clear Alert?',
+        text: "Save to history?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#075e54',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            db.ref('alerts/' + id).once('value', snap => {
+                if(snap.val()) {
+                    db.ref('history/' + auth.currentUser.uid).push({ ...snap.val(), status, archivedAt: new Date().toLocaleString() });
+                    db.ref('alerts/' + id).remove();
+                }
+            });
+        }
+    });
+}
+
+function deleteHistoryItem(key) {
+    Swal.fire({ title: 'Delete?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Delete' }).then((result) => {
+        if (result.isConfirmed) { db.ref(`history/${auth.currentUser.uid}/${key}`).remove(); }
+    });
+}
+
+function deletePaymentItem(key) {
+    Swal.fire({ title: 'Delete?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Delete' }).then((result) => {
+        if (result.isConfirmed) { db.ref(`payments/${auth.currentUser.uid}/${key}`).remove(); }
+    });
 }
 
 function savePayment() {
-    const user = auth.currentUser;
-    if(!user) return alert("Please login first!");
     const n = getEl('pay-name').value.trim();
     const t = parseFloat(getEl('pay-total').value) || 0;
     const p = parseFloat(getEl('pay-pending').value) || 0;
-    if(!n || t <= 0) return alert("Please enter Worker Name and correct Wages!");
-    if(p > t) return alert("Error: Pending amount cannot be more than Total Wages!");
-    db.ref('payments/' + user.uid).push({ 
-        workerName: n, totalAmount: t, pendingAmount: p, date: new Date().toLocaleString() 
-    }).then(() => {
+    if(!n || t <= 0) return Swal.fire('Incomplete', 'Fill details!', 'info');
+    
+    Swal.fire({ title: 'Saving...', didOpen: () => { Swal.showLoading(); } });
+
+    db.ref('payments/' + auth.currentUser.uid).push({ workerName: n, totalAmount: t, pendingAmount: p, date: new Date().toLocaleString() })
+    .then(() => {
         ['pay-name', 'pay-total', 'pay-pending'].forEach(id => getEl(id).value = ""); 
-        alert("Record saved successfully!");
-    }).catch(e => alert("Error: " + e.message));
+        Swal.fire({ title: 'Saved!', icon: 'success', timer: 1200, showConfirmButton: false });
+    });
 }
 
 db.ref('alerts').limitToLast(1).on('child_added', snap => {
     const d = snap.val();
     const ticker = getEl('running-msg');
-    const currentTime = new Date().toLocaleTimeString();
-    const currentDate = new Date().toLocaleDateString();
-    if (d.type === 'free') {
-        ticker.innerHTML = `📢 <b>NEW ALERT:</b> ${d.name} is now <b>I AM AVAILABLE</b> [${currentDate} ${currentTime}]`;
-    } else if (d.type === 'admin') {
-        ticker.innerHTML = `📢 <b>ADMIN:</b> ${d.msg} [${currentDate} ${currentTime}]`;
-    } else {
-        ticker.innerHTML = `⚠️ <b>NEW ALERT:</b> ${d.name} says: "${d.msg}" [${currentDate} ${currentTime}]`;
-    }
+    ticker.innerHTML = `📢 <b>NEW:</b> ${d.name}: ${d.msg}`;
     notifSound.play().catch(e => {});
-    if (Notification.permission === "granted") new Notification("Labor Connect", { body: `${d.name}: ${d.msg}` });
+    if (Notification.permission === "granted") {
+        new Notification("Labor Connect Pro 📢", { body: `${d.name}: ${d.msg}`, icon: 'https://shafiqrr3.github.io/labour-connect-pro/icon.png' });
+    }
 });
 
+// --- TICKER LOGIC (TIME & DATE ALWAYS RUNNING) ---
 setInterval(function() {
     var ticker = document.getElementById('running-msg');
-    if (ticker && !ticker.innerHTML.includes("ALERT") && !ticker.innerHTML.includes("ADMIN")) {
+    if (ticker) {
         var d = new Date();
-        ticker.innerHTML = "📅 " + d.toLocaleDateString() + " | 🕒 " + d.toLocaleTimeString() + " | " + welcomeText;
+        var timeStr = d.toLocaleTimeString();
+        var dateStr = d.toLocaleDateString();
+        
+        if (ticker.innerHTML.includes("NEW") || ticker.innerHTML.includes("ADMIN")) {
+            if(!ticker.innerHTML.includes(" | 🕒")) {
+                ticker.innerHTML += ` | 📅 ${dateStr} | 🕒 ${timeStr}`;
+            }
+        } else {
+            ticker.innerHTML = `📅 ${dateStr} | 🕒 ${timeStr} | ${welcomeText}`;
+        }
     }
 }, 1000);
-            
