@@ -89,7 +89,7 @@ body {
 
 /* Rang ko Balanced kar diya gaya hai */
 .footer-links span { 
-    color: #fdd835 !important; /* Soft Yellow - Jo saaf dikhega magar "Tez" nahi lagega */
+    color: #fdd835 !important; 
     font-weight: 600; 
     margin: 0 8px; 
     cursor: pointer; 
@@ -99,4 +99,34 @@ body {
 .footer-links span:hover { 
     color: #ffffff !important; 
     border-bottom: 1px solid #ffffff; 
+}
+
+/* --- Professional Compact Alert Box Style --- */
+.swal2-popup {
+    width: 280px !important; /* Mobile friendly chhota size */
+    padding: 15px !important;
+    border-radius: 20px !important;
+    font-family: 'Segoe UI', sans-serif !important;
+}
+.swal2-title {
+    font-size: 18px !important;
+    color: var(--primary-teal) !important;
+}
+.swal2-html-container {
+    font-size: 14px !important;
+    margin: 10px 0 !important;
+}
+.swal2-icon {
+    transform: scale(0.6); /* Icon ko thoda chhota kiya */
+    margin: 5px auto !important;
+}
+.swal2-confirm {
+    background-color: var(--primary-teal) !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+    padding: 8px 25px !important;
+}
+.swal2-cancel {
+    border-radius: 12px !important;
+    font-size: 14px !important;
 }
